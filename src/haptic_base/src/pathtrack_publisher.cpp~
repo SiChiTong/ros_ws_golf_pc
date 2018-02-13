@@ -1,0 +1,144 @@
+#include "ros/ros.h"
+
+#include <Leap.h>
+#include <iostream>
+#include <cstring>
+#include <math.h>
+  
+#include "pathtrack/Message.h"
+
+#define m 6
+float pre_x, pre_y;
+const float k = 7000;
+const float Kp = 20;
+const float Kd = 1.0;
+const float maxMotorValue = 4088;
+const float minMotorValue = 0;
+const int Np = 100;
+
+using namespace Leap;
+float des_x(int i); 
+float des_y(int i); 
+
+int main(int argc, char **argv)
+{
+  // ノード名の初期化
+  ros::init(argc, argv, "pathtrack");
+  // ROSシステムとの通信のためのノードハンドルを宣言
+  ros::NodeHandle nh;
+  ros::Publisher pathtrack_pub = nh.advertise<pathtrack::Message>("pathtrack_msg", 6);
+
+  Leap::Controller controller;
+
+  // ループの周期を設定する
+  ros::Rate loop_rate(50);
+  
+  // ros::ok()はROSの動作が正常であるならtrueを返す関数
+  while (ros::ok())
+  {
+    pathtrack::Message data;
+    float desiredAngle = 0;
+    float currentAngle = 0;
+    int fAmplitude;
+    float beta;
+    float currentAngleMotor;
+    float startTime;
+    float F, Fx, Fy;
+    float distance;
+    int motorNumber;
+    int amplitude[2],motorAmp[m];
+    int count;
+    float minDist = 1.e5;
+    float roll;
+
+    const Frame frame = controller.frame();
+
+    Leap::Hand hand=frame.hands()[0];
+    const Vector normal = hand.palmNormal();
+    const Vector position = hand.wristPosition();
+    const Vector velocity = hand.palmVelocity();
+    
+    roll = normal.roll() * RAD_TO_DEG + 90.0;
+	if (roll >= 180.0 && roll < 270.0)
+		roll -= 360.0;
+
+	if (roll == 270.0) {
+		motorNumber = 0;
+		amplitude[0] = amplitude[1] = 0;
+                fAmplitude = 0;
+
+		data.pwm0=0;
+		data.pwm1=0;
+		data.pwm2=0;
+		data.pwm3=0;
+		data.pwm4=0;
+		data.pwm5=0;
+	}
+
+	else
+	{
+		for (int i = 1; i < Np - 1; i++) {
+			distance = sqrt((des_x(i) - position.x)*(des_x(i) - position.x) + (des_y(i) - position.y)*(des_y(i) - position.y));
+			if (distance < minDist) {
+				minDist = distance;
+				count = i;
+			}
+		}
+		// PD制御
+		Fx = k * (des_x(count + 1) - 2 * des_x(count) + des_x(count - 1)) + Kp * (des_x(count) - position.x) + Kd * ((des_x(count) - des_x(count - 1)) - (position.x - pre_x));
+		Fy = k * (des_y(count + 1) - 2 * des_y(count) + des_y(count - 1)) + Kp * (des_y(count) - position.y) + Kd * ((des_y(count) - des_y(count - 1)) - (position.y - pre_y));
+		F = sqrt(Fx*Fx + Fy*Fy);
+
+		if (F > (float)maxMotorValue)
+			fAmplitude = maxMotorValue - minMotorValue;
+		else
+			fAmplitude = (int)ceil(F);
+		desiredAngle = atan2(Fy, Fx) * 180 / PI;
+
+		currentAngle = desiredAngle - roll;
+
+		while (currentAngle < 0)
+			currentAngle += 360;
+		currentAngleMotor = currentAngle * m / 360;
+		motorNumber = ((int)floor(currentAngleMotor)) % m;
+
+		beta = currentAngleMotor - (float)motorNumber;
+		amplitude[0] = ceil(sqrt(1 - beta)*fAmplitude) + minMotorValue;
+		amplitude[1] = ceil(sqrt(beta)*fAmplitude) + minMotorValue;
+
+		motorAmp[motorNumber] = amplitude[0];
+		motorAmp[(motorNumber + 1) % m] = amplitude[1];
+		for (int k = 0; k < m; k++)
+			if (k != motorNumber && k != ((motorNumber + 1) % m))
+				motorAmp[k] = 0;
+                data.pwm0=motorAmp[0];
+		data.pwm1=motorAmp[1];
+		data.pwm2=motorAmp[2];
+		data.pwm3=motorAmp[3];
+		data.pwm4=motorAmp[4];
+		data.pwm5=motorAmp[5];
+		pre_x = position.x; pre_y = position.y;
+	}
+    
+    ROS_INFO("send msg = %f, %f, %f, %f, %d", roll, position.x, position.y, desiredAngle, fAmplitude);
+    pathtrack_pub.publish(data);
+    
+    ros::spinOnce();
+    
+    // 上で定められたループサイクルになるように、スリープに入る
+    loop_rate.sleep();
+  }
+
+  return 0;
+}
+
+float des_x(int i) {
+	float X;
+	X = 100 * cos(i * 2 * PI / Np - PI / 2);
+	return X;
+}
+float des_y(int i) {
+	float Y;
+	Y = 100 * sin(i * 2 * PI / Np - PI / 2) + 200;
+	return Y;
+}

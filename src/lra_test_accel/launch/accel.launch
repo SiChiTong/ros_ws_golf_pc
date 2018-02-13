@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="dev" default="/dev/input/js0" />
+	<node respawn="true" pkg="joy" type="joy_node" name="joy">
+		<param name="dev" value="$(arg dev)" />
+		<param name="deadzone" value="0.2" />
+		<param name="autorepeat_rate" value="0" />
+		<param name="coalesce_interval" value="0.025" />
+	</node>
+
+	<node pkg="lra_test_accel" type="putter_motors" name="putter_motors" output="screen">
+		
+	</node>
+
+	<!--<machine name="haptic2" address="192.168.1.41" env-loader="/home/pi/haptic_ws/env.sh" user="pi" password="raspberry" default="false" /-->
+	<!--node machine="haptic2" name="PWMlistener" pkg="haptic_listener" type="PWMlistener" /-->
+	
+
+</launch>

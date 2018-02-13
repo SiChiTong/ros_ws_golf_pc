@@ -1,0 +1,8 @@
+prefix=/home/raven/ros_ws/devel
+
+Name: rosserial_msgs
+Description: Description of rosserial_msgs
+Version: 0.7.5
+Cflags: -I/home/raven/ros_ws/devel/include
+Libs: -L/home/raven/ros_ws/devel/lib 
+Requires: message_runtime

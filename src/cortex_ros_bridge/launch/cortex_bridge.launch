@@ -1,0 +1,8 @@
+ <launch>
+   <node name="cortex_bridge" type="cortex_bridge" pkg="cortex_bridge" output="screen">
+<!--
+     <param name="local_ip" value="10.240.74.31"/>
+     <param name="cortex_ip" value="10.240.74.84"/>
+-->
+</node>
+ </launch>

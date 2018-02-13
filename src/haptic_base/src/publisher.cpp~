@@ -1,0 +1,144 @@
+#include "ros/ros.h"
+
+#include <Leap.h>
+#include <iostream>
+#include <cstring>
+#include <math.h>
+#include <stdlib.h>
+  
+#include "angleDownTest/Message.h"
+
+#define m 6
+const float maxMotorValue = 4088;
+const float minMotorValue = 0;
+float desiredAngle = 0;
+float currentAngle = 0;
+
+using namespace Leap;
+void activateMotor(int *motorAmp, float roll); 
+void inActivateMotor(int *motorAmp); 
+
+int main(int argc, char **argv)
+{
+  // ノード名の初期化
+  ros::init(argc, argv, "angleDownTest");
+  // ROSシステムとの通信のためのノードハンドルを宣言
+  ros::NodeHandle nh;
+  ros::Publisher pub = nh.advertise<angleDownTest::Message>("angleDownTest_msg", 6);
+
+  Leap::Controller controller;
+
+  // ループの周期を設定する
+  ros::Rate loop_rate(50);
+
+  int motorAmp[m];
+  int count=0;
+  int state=0;
+  int num;
+  double r;
+
+  ros::Time::init();
+  float startTime = ros::Time::now().toSec();
+
+  // ros::ok()はROSの動作が正常であるならtrueを返す関数
+  while (ros::ok())
+  {
+    angleDownTest::Message data;
+
+    int count;
+    float roll;
+
+    const Frame frame = controller.frame();
+
+    Leap::Hand hand=frame.hands()[0];
+    const Vector normal = hand.palmNormal();
+    //const Vector position = hand.wristPosition();
+    //const Vector velocity = hand.palmVelocity();
+    
+    roll = normal.roll() * RAD_TO_DEG + 90.0;
+	if (roll >= 180.0 && roll < 270.0)
+		roll -= 360.0;
+
+	if (roll == 270.0) {
+                inActivateMotor(motorAmp);
+		data.pwm0=0;
+		data.pwm1=0;
+		data.pwm2=0;
+		data.pwm3=0;
+		data.pwm4=0;
+		data.pwm5=0;
+	}
+
+	else
+	{
+                if(state == 1) {
+                  r = double(rand())/RAND_MAX;
+                  num = int(floor(r * 7.9));
+                  desiredAngle = num * 45;
+                  if(desiredAngle > 180) 
+                    desiredAngle -= 360;
+                  activateMotor(motorAmp, roll);
+                  if(count > 300) {
+                    state = 0;
+                    count = 0;
+                  }
+                }else {
+                  inActivateMotor(motorAmp);
+                  if(count > 300) {
+                    state = 1;
+                    count = 0;
+                  }
+                }
+		
+                data.pwm0=motorAmp[0];
+		data.pwm1=motorAmp[1];
+		data.pwm2=motorAmp[2];
+		data.pwm3=motorAmp[3];
+		data.pwm4=motorAmp[4];
+		data.pwm5=motorAmp[5];
+                count++;
+	}
+
+    ROS_INFO("send msg = , %6.4f, %f, %f, %d, %d", ros::Time::now().toSec()-startTime, roll, desiredAngle, state, count);
+    pub.publish(data);
+    
+    ros::spinOnce();
+    
+    // 上で定められたループサイクルになるように、スリープに入る
+    loop_rate.sleep();
+  }
+
+  return 0;
+}
+
+void activateMotor(int *motorAmp, float roll) {
+    int fAmplitude;
+    float beta;
+    float currentAngleMotor;
+    float startTime;
+    int motorNumber;
+    int amplitude[2];
+
+    currentAngle = desiredAngle - roll;
+
+    while (currentAngle < 0)
+	currentAngle += 360;
+    currentAngleMotor = currentAngle * m / 360;
+    motorNumber = ((int)floor(currentAngleMotor)) % m;
+
+    beta = currentAngleMotor - (float)motorNumber;
+    fAmplitude = maxMotorValue - minMotorValue;
+    amplitude[0] = ceil(sqrt(1 - beta)*fAmplitude) + minMotorValue;
+    amplitude[1] = ceil(sqrt(beta)*fAmplitude) + minMotorValue;
+
+    motorAmp[motorNumber] = amplitude[0];
+    motorAmp[(motorNumber + 1) % m] = amplitude[1];
+    for (int k = 0; k < m; k++)
+        if (k != motorNumber && k != ((motorNumber + 1) % m))
+            motorAmp[k] = 0;
+}
+
+void inActivateMotor(int *motorAmp) {
+    for(int i = 0;i < m;i++)
+        motorAmp[i] = 0;
+}

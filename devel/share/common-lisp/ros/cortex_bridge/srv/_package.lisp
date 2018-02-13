@@ -1,0 +1,10 @@
+(cl:defpackage cortex_bridge-srv
+  (:use )
+  (:export
+   "CORTEXSETORIGIN"
+   "<CORTEXSETORIGIN-REQUEST>"
+   "CORTEXSETORIGIN-REQUEST"
+   "<CORTEXSETORIGIN-RESPONSE>"
+   "CORTEXSETORIGIN-RESPONSE"
+  ))
+

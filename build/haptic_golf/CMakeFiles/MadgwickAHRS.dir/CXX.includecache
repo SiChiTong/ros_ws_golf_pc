@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/raven/ros_ws/src/haptic_golf/include/haptic_golf/MadgwickAHRS.h
+
+/home/raven/ros_ws/src/haptic_golf/src/MadgwickAHRS.cpp
+haptic_golf/MadgwickAHRS.h
+/home/raven/ros_ws/src/haptic_golf/src/haptic_golf/MadgwickAHRS.h
+math.h
+-
+

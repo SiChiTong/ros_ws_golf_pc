@@ -1,0 +1,8 @@
+prefix=/home/raven/ros_ws/devel
+
+Name: lra_test_accel
+Description: Description of lra_test_accel
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/raven/ros_ws/devel/lib 
+Requires: roscpp haptic_base

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+	<machine name="haptic2" address="192.168.1.41" env-loader="/home/pi/haptic_ws/devel/env.sh" user="pi" password="raspberry" default="false"/>
+	<node machine="haptic2" name="pca" pkg="lra_test" type="pca_dyn" output="screen">
+	    <param type="int" name="pwm_freq" value="1600" />
+            <param type="int" name="max_value" value="4095" />
+            <param type="int" name="num_taps" value="3" />
+            <param type="double" name="tap_interval" value="1" />
+            <param type="int" name="ros_rate" value="10000" />
+
+        </node>
+
+</launch>

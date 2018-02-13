@@ -1,0 +1,49 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(pathtrack)
+
+## catkinビルドに必要なコンポーネントパッケージの設定
+find_package(catkin REQUIRED COMPONENTS
+  leap_motion
+  roscpp
+  rospy
+  rosserial_arduino
+  rosserial_python
+  std_msgs
+  message_generation
+)
+
+## メッセージファイルの設定
+add_message_files(
+  FILES
+  Message.msg
+)
+
+## add_message_filesで使用するメッセージの依存関係を設定
+generate_messages(DEPENDENCIES std_msgs)
+
+## インクルードディレクトリ、ライブラリ、catkinビルド、システムに依存するパッケージの指定
+catkin_package(
+ INCLUDE_DIRS include
+ LIBRARIES leapard
+ CATKIN_DEPENDS leap_motion roscpp rospy rosserial_arduino rosserial_python std_msgs message_runtime
+ DEPENDS system_lib
+)
+
+## インクルードディレクトリの設定
+include_directories(
+  ${catkin_INCLUDE_DIRS} ~/LeapSDK/include
+)
+
+## leapard_msg_publisherノードの設定
+add_executable(pathtrack_publisher
+  src/pathtrack_publisher.cpp)
+target_link_libraries(pathtrack_publisher ${catkin_LIBRARIES} ~/LeapSDK/lib/x64/libLeap.so)
+add_dependencies(pathtrack_publisher
+  pathtrack_generate_messages_cpp)
+
+## arduino_msgノードの設定
+##add_executable(arduino_msg_subscriber
+##  src/arduino_msg.cpp)
+##target_link_libraries(arduino_msg_subscriber ${catkin_LIBRARIES})
+##add_dependencies(arduino_msg_subscriber
+##  arduino_generate_messages_cpp)
