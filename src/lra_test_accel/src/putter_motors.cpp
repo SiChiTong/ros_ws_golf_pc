@@ -195,7 +195,8 @@ void readProcessedFile(std::string name,
   double startT = -1;
   //Peak detection vars
   //std::pair <int, double> minValue (-1, DBL_MAX), maxValue(-1,0), hitPeak(-1, 0);
-  double previousValue =0;
+  double previousValueAcc =0;
+  double previousValuePos =0;
   int numSamples = 0;
   bool foundPeaks = false;
   
@@ -228,23 +229,22 @@ void readProcessedFile(std::string name,
         break;
         case 1:
           par.second.y = atof(token.c_str()); 
-          //First, are we in the absolute peak? If yes, then print or something
           
-          if (numSamples > 0  && previousValue > 0 && (fabs((par.second.y-previousValue)*100/previousValue) > 500))
+          if (numSamples > 0  && previousValuePos < 0 && par.second.y > 0)
           {
-            //std::cout << numSamples << " "<<par.second.y<<" "<<previousValue << " "<<abs((par.second.y-previousValue)*100/previousValue)<<std::endl;
+            std::cout << "Gyro peak"<<numSamples << " "<<par.second.y<<" "<<previousValuePos << std::endl;
             //Impact Peak detected
             foundPeaks = true;
             hitPeak.first = numSamples;
             hitPeak.second = par.second.y;
           }
-          previousValue = par.second.y;
+          previousValuePos = par.second.y;
     
-          if ((minValue.first == -1 || minValue.second > par.second.y) && !foundPeaks){
+          if ((minValue.first == -1 || minValue.second > par.second.y) ){
             minValue.first  = numSamples;
             minValue.second = par.second.y;
           }
-          if ((maxValue.first == -1 || maxValue.second <  par.second.y) && !foundPeaks){
+          if ((maxValue.first == -1 || maxValue.second <  par.second.y) ){
             maxValue.first  = numSamples;
             maxValue.second = par.second.y;
           }
@@ -253,25 +253,15 @@ void readProcessedFile(std::string name,
         case 2:
           par.second.x = atof(token.c_str());
           
-          if (numSamples > 0  && previousValue > 0 && (fabs((par.second.x-previousValue)*100/previousValue) > 500))
+          if (numSamples > 0  && previousValueAcc > 0 && (fabs((par.second.x-previousValueAcc)*100/previousValueAcc) > 500))
           {
-            foundPeaks = false;
+            std::cout << "Acc "<< numSamples << " "<<par.second.x<<" "<<previousValueAcc << std::endl;
+            /*foundPeaks = true;
             hitPeak.first = numSamples;
-            hitPeak.second = par.second.x;
+            hitPeak.second = par.second.x;*/
           }
-          previousValue = par.second.x;
-    
-          if ((minValue.first == -1 || minValue.second > par.second.x) && !foundPeaks){
-            minValue.first  = numSamples;
-            minValue.second = par.second.x;
-          }
-          if ((maxValue.first == -1 || maxValue.second <  par.second.x) && !foundPeaks){
-            maxValue.first  = numSamples;
-            maxValue.second = par.second.x;
-          }
-        break;
-        case 2:
-          par.second.z = atof(token.c_str());
+          previousValueAcc = par.second.x;
+
           validPair = true; 
         break;
 
@@ -297,28 +287,32 @@ double mapValues(double x, double fl, double fh, double tl, double th){
   return (((x-fl)*((th-tl)/(fh-fl)))+tl);
 }
 
-void updateVibration(double ac, double min, double max, double offset){
-  double dutyCycle = 0;
+
+void stopMotors(){
   for(int i = 0; i < 4; i ++){
     val.duty_values[i]=0;
-    val.interval_values[i]=0.01;
+    val.interval_values[i]=0.5;
   }
+}
+void updateVibration(double ac, double min, double max, double offset){
+  double dutyCycle = 0;
+  stopMotors();
   if (ac-offset < 0){
-    dutyCycle = mapValues(fabs(ac-offset), 0, fabs(min), 14.5, 0);
-    double interval =  mapValues(abs(ac-offset), 0, fabs(min), 0.01, 0.03);
+    dutyCycle = mapValues(fabs(ac-offset), 0, fabs(min), 0, 14.5);
+    double interval =  mapValues(abs(ac-offset), 0, fabs(min), 0.03, 0.01);
     dutyCycle = calDuty(dutyCycle);
     val.duty_values[0]=dutyCycle;
     val.interval_values[0] = interval;
   }else if (ac-offset > 0){
-    dutyCycle = mapValues(fabs(ac-offset), 0, fabs(max), 14.5, 0);
-    double interval =  mapValues(abs(ac-offset), 0, fabs(max), 0.01, 0.03);
+    dutyCycle = mapValues(fabs(ac-offset), 0, fabs(max), 0, 14.5);
+    double interval =  mapValues(abs(ac-offset), 0, fabs(max), 0.03, 0.01);
     dutyCycle = calDuty(dutyCycle);
     val.duty_values[2]=dutyCycle;
     val.interval_values[2] = interval;
   }else{
-    val.duty_values[0]=0;
+    val.duty_values[0]=2047;
     //val.interval_values[0] = 0.01;
-    val.duty_values[2]=0;
+    val.duty_values[2]=2047;
     //val.interval_values[2] = 0.01;
   }
 }
@@ -331,13 +325,6 @@ void ballHitVibration(){
   }
 }
 
-void stopMotors(){
-  for(int i = 0; i < 4; i ++){
-    val.duty_values[i]=0;
-    val.interval_values[i]=0.5;
-  }
-}
-
 int main( int argc, char** argv )
 {
   ros::init(argc, argv, "putter_motor_changer");
@@ -345,14 +332,17 @@ int main( int argc, char** argv )
   ros::Rate r(1000);
   ros::Publisher marker_pub = n.advertise<haptic_base::PutterValues>("putter_motor_values", 100);
   //Accelerometer and Gyro Vectors, prerecorded
-  std::vector<std::pair<double, geometry_msgs::Point> > acc, gyro;
+  std::vector<std::pair<double, geometry_msgs::Point> > acc, gyro, posAcc;
   //Characteristics of the curves, minumum and maximum for Yacc and Xgyro
 
   std::pair <int, double> minValueGyro (-1, DBL_MAX), maxValueGyro(-1,0), hitPeakGyro(-1, 0);
   std::pair <int, double> minValueAcc (-1, DBL_MAX), maxValueAcc(-1,0), hitPeakAcc(-1, 0);
   //Fill the vectors with data from files
-  readAcc("/home/raven/ros_ws/src/lra_test_accel/imu_data/acc.csv", acc, minValueAcc, maxValueAcc, hitPeakAcc);
-  readGyro("/home/raven/ros_ws/src/lra_test_accel/imu_data/gyro.csv", gyro, minValueGyro, maxValueGyro, hitPeakGyro);
+  //readAcc("/home/raven/ros_ws/src/lra_test_accel/imu_data/acc.csv", acc, minValueAcc, maxValueAcc, hitPeakAcc);
+  //readGyro("/home/raven/ros_ws/src/lra_test_accel/imu_data/gyro.csv", gyro, minValueGyro, maxValueGyro, hitPeakGyro);
+  readProcessedFile("/home/raven/ros_ws/src/lra_test_accel/imu_data/Anthonny4mTrimmed.csv", posAcc, minValueGyro, maxValueGyro, hitPeakGyro);
+  std::cout<<"Min/max peak " << minValueGyro.first << " " <<maxValueGyro.first<< " " << hitPeakGyro.first<< std::endl;
+  
   //Initialize the message to be sent to RPi
   stopMotors();
   //Int iterator for the vector
@@ -362,20 +352,21 @@ int main( int argc, char** argv )
   while (ros::ok())
   {
     double elapsed = (ros::Time::now() - startTime).toNSec();
-    while (curIndex < gyro.size() && elapsed > gyro[curIndex].first ){
+    while (curIndex < posAcc.size() && elapsed > posAcc[curIndex].first){
       curIndex++;
     }
-    if (curIndex < 2000){
-      if (curIndex >= hitPeakAcc.first && curIndex < hitPeakAcc.first + 15)
-        ballHitVibration();
-      else
-        updateVibration(gyro[curIndex].second.x, minValueGyro.second, maxValueGyro.second, gyro[0].second.x);
+    if (curIndex < posAcc.size()){
+      //if (curIndex >= hitPeakGyro.first && curIndex < hitPeakGyro.first + 15)
+        //ballHitVibration();
+        
+
+      //else
+        updateVibration(posAcc[curIndex].second.y, minValueGyro.second, maxValueGyro.second, posAcc[0].second.y);
 
     }else{
       startTime = ros::Time::now();
       curIndex = 0;
       //stopMotors();
-      
     }
     
     /*while (curIndex < acc.size() && elapsed > acc[curIndex].first ){
