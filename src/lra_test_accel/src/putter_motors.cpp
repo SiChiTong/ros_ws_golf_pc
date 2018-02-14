@@ -183,7 +183,8 @@ void readGyro(std::string name,
 }
 
 void readProcessedFile(std::string name, 
-  std::vector<std::pair<double, geometry_msgs::Point> > &v, 
+  std::vector<std::pair<double, geometry_msgs::Point> > &v,
+  std::pair <int, double> &startPoint, 
   std::pair <int, double> &minValue,
   std::pair <int, double> &maxValue,
   std::pair <int, double> &hitPeak)
@@ -199,7 +200,10 @@ void readProcessedFile(std::string name,
   double previousValuePos =0;
   int numSamples = 0;
   bool foundPeaks = false;
-  
+  bool startPointSet = false;
+  int signChangeCount = 0;
+
+
   while ( file.good() )
   {
     getline ( file, value);
@@ -209,6 +213,7 @@ void readProcessedFile(std::string name,
     int paramNum = 0;
     std::pair<double, geometry_msgs::Point> par; 
     bool validPair = false;
+    
     do{
     
       pos = value.find(delimiter);
@@ -232,12 +237,21 @@ void readProcessedFile(std::string name,
           
           if (numSamples > 0  && previousValuePos < 0 && par.second.y > 0)
           {
-            std::cout << "Gyro peak"<<numSamples << " "<<par.second.y<<" "<<previousValuePos << std::endl;
+            //std::cout << "Gyro peak"<<numSamples << " "<<par.second.y<<" "<<previousValuePos << std::endl;
             //Impact Peak detected
             foundPeaks = true;
             hitPeak.first = numSamples;
             hitPeak.second = par.second.y;
           }
+
+
+          if (startPointSet == false  && numSamples > 0 && ( fabs((par.second.y-previousValuePos)*100/previousValuePos) > 50)){
+              startPoint.first = numSamples;
+              startPoint.second = par.second.y;
+              //ROS_INFO("Found start at %d", numSamples);
+              startPointSet = true;
+          }
+
           previousValuePos = par.second.y;
     
           if ((minValue.first == -1 || minValue.second > par.second.y) ){
@@ -248,6 +262,8 @@ void readProcessedFile(std::string name,
             maxValue.first  = numSamples;
             maxValue.second = par.second.y;
           }
+
+
         
         break;
         case 2:
@@ -255,7 +271,7 @@ void readProcessedFile(std::string name,
           
           if (numSamples > 0  && previousValueAcc > 0 && (fabs((par.second.x-previousValueAcc)*100/previousValueAcc) > 500))
           {
-            std::cout << "Acc "<< numSamples << " "<<par.second.x<<" "<<previousValueAcc << std::endl;
+            //std::cout << "Acc "<< numSamples << " "<<par.second.x<<" "<<previousValueAcc << std::endl;
             /*foundPeaks = true;
             hitPeak.first = numSamples;
             hitPeak.second = par.second.x;*/
@@ -284,6 +300,7 @@ int calDuty(double amplitude)
 }
 
 double mapValues(double x, double fl, double fh, double tl, double th){
+  //return std::min(th, std::max(tl,(((x-fl)*((th-tl)/(fh-fl)))+tl)));
   return (((x-fl)*((th-tl)/(fh-fl)))+tl);
 }
 
@@ -298,14 +315,14 @@ void updateVibration(double ac, double min, double max, double offset){
   double dutyCycle = 0;
   stopMotors();
   if (ac-offset < 0){
-    dutyCycle = mapValues(fabs(ac-offset), 0, fabs(min), 0, 14.5);
-    double interval =  mapValues(abs(ac-offset), 0, fabs(min), 0.03, 0.01);
+    dutyCycle = mapValues(fabs(ac-offset), 0, fabs(min), 14.5, 0);
+    double interval =  mapValues(abs(ac-offset), 0, fabs(min), 0.01, 0.03);
     dutyCycle = calDuty(dutyCycle);
     val.duty_values[0]=dutyCycle;
     val.interval_values[0] = interval;
   }else if (ac-offset > 0){
-    dutyCycle = mapValues(fabs(ac-offset), 0, fabs(max), 0, 14.5);
-    double interval =  mapValues(abs(ac-offset), 0, fabs(max), 0.03, 0.01);
+    dutyCycle = mapValues(fabs(ac-offset), 0, fabs(max), 14.5, 0);
+    double interval =  mapValues(abs(ac-offset), 0, fabs(max), 0.01, 0.03);
     dutyCycle = calDuty(dutyCycle);
     val.duty_values[2]=dutyCycle;
     val.interval_values[2] = interval;
@@ -335,14 +352,16 @@ int main( int argc, char** argv )
   std::vector<std::pair<double, geometry_msgs::Point> > acc, gyro, posAcc;
   //Characteristics of the curves, minumum and maximum for Yacc and Xgyro
 
-  std::pair <int, double> minValueGyro (-1, DBL_MAX), maxValueGyro(-1,0), hitPeakGyro(-1, 0);
+  std::pair <int, double> minValueGyro (-1, DBL_MAX), maxValueGyro(-1,0), hitPeakGyro(-1, 0), startPoint (-1, DBL_MAX);
   std::pair <int, double> minValueAcc (-1, DBL_MAX), maxValueAcc(-1,0), hitPeakAcc(-1, 0);
   //Fill the vectors with data from files
   //readAcc("/home/raven/ros_ws/src/lra_test_accel/imu_data/acc.csv", acc, minValueAcc, maxValueAcc, hitPeakAcc);
   //readGyro("/home/raven/ros_ws/src/lra_test_accel/imu_data/gyro.csv", gyro, minValueGyro, maxValueGyro, hitPeakGyro);
-  readProcessedFile("/home/raven/ros_ws/src/lra_test_accel/imu_data/Anthonny4mTrimmed.csv", posAcc, minValueGyro, maxValueGyro, hitPeakGyro);
-  std::cout<<"Min/max peak " << minValueGyro.first << " " <<maxValueGyro.first<< " " << hitPeakGyro.first<< std::endl;
+  readProcessedFile("/home/raven/ros_ws/src/lra_test_accel/imu_data/Anthonny4mTrimmed.csv", posAcc, startPoint, minValueGyro, maxValueGyro, hitPeakGyro);
+  std::cout<<"Start/Min/Hit/Max " << startPoint.first << "/" <<minValueGyro.first<< "/" << hitPeakGyro.first<< "/" << maxValueGyro.first <<std::endl;
+  std::cout<<"Tempo " << (posAcc[minValueGyro.first].first - posAcc[startPoint.first].first)/1000000.0<<"/"<<(posAcc[hitPeakGyro.first].first - posAcc[minValueGyro.first].first)/1000000.0<<"="<<std::endl;
   
+
   //Initialize the message to be sent to RPi
   stopMotors();
   //Int iterator for the vector
@@ -356,17 +375,16 @@ int main( int argc, char** argv )
       curIndex++;
     }
     if (curIndex < posAcc.size()){
-      //if (curIndex >= hitPeakGyro.first && curIndex < hitPeakGyro.first + 15)
-        //ballHitVibration();
-        
-
-      //else
+      /*if (curIndex >= hitPeakGyro.first && curIndex < hitPeakGyro.first + 15)
+        ballHitVibration();
+      else*/
         updateVibration(posAcc[curIndex].second.y, minValueGyro.second, maxValueGyro.second, posAcc[0].second.y);
 
     }else{
+      ros::Duration(1.0).sleep();
       startTime = ros::Time::now();
       curIndex = 0;
-      //stopMotors();
+      
     }
     
     /*while (curIndex < acc.size() && elapsed > acc[curIndex].first ){
