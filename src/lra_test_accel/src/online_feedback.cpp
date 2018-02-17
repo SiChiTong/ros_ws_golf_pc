@@ -6,6 +6,10 @@
 #include <std_msgs/String.h>
 #include <utility>
 #include <limits>
+#include <Eigen/Dense>
+#include "kalman.hpp"
+
+
 #define PI 3.14159265359
 #define RAD2DEG 57.295779513 
 
@@ -16,11 +20,43 @@ State curState = BACKSWING;
 double prevAngle = 0;
 double curAngle = 0;
 double prevTime = -1;
-double gyroBias = 81.285250;
+double gyroBias = 80.878750;
 double gyroScaling = 0.0175;
 double desiredAngleFeedback = -20;
 bool engageFeedback = true;
+int actionCounter = -1;
 
+double dt = 1.0/200.; // Time step
+/*** KalmanFilter Setup ***/
+const int n_k=3; // Number of States
+const int m_k=1; // Number of Measurements
+Eigen::MatrixXd A(n_k, n_k); // System dynamics matrix
+Eigen::MatrixXd C(m_k, n_k); // Output matrix
+Eigen::MatrixXd Q(n_k, n_k); // Process noise covariance
+Eigen::MatrixXd R(m_k, m_k); // Measurement noise covariance
+Eigen::MatrixXd P(n_k, n_k); // Estimate error covariance
+KalmanFilter kf;
+Eigen::VectorXd x0(n_k);
+double t = 0;
+Eigen::VectorXd y(m_k), y_est(m_k);
+int kalmanStabilizationCycles = 0;
+ros::Publisher motor_values_pubPred;
+
+void initializeKalmanFilter(){
+  // Discrete LTI projectile motion, measuring position only
+  A << 1, dt, 0, 0, 1, dt, 0, 0, 1;
+  C << 1, 0, 0;
+  // Reasonable covariance matrices
+  Q << .5, .5, .0, .5, .5, .0, .0, .0, .0;
+  R << 3;
+  P << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
+  kf =KalmanFilter(dt,A,C,Q,R,P);
+  // Best guess of initial states
+  x0 << 90.0, 0, 0;
+  kf.init(0, x0);
+  y_est << 0.0;
+
+}
 
 int calDuty(double amplitude)
 {
@@ -73,20 +109,81 @@ void stopMotors(){
   }
 }
 
+
+void rpyCB(const geometry_msgs::Vector3::ConstPtr& msg){
+  //double curTime = msg->header.stamp.toSec();
+  curAngle = msg->x;
+        /*** prediction using KF ***/
+  t += dt;
+  y_est = kf.prediction();
+  y << curAngle;
+  kf.update(y);
+  x0 << y, kf.state()(1), kf.state()(2);
+  kf.init(t, x0);
+  if (kalmanStabilizationCycles < 400)
+    kalmanStabilizationCycles++;
+  
+  geometry_msgs::Point punto;
+  punto.x = curAngle;
+  punto.y = (double)y_est[0];
+  motor_values_pubPred.publish(punto);
+  
+  if (engageFeedback 
+    && curAngle > desiredAngleFeedback 
+    && (double)y_est[0] <= desiredAngleFeedback 
+    && kalmanStabilizationCycles == 400){
+      //prevAngle > desiredAngleFeedback && 
+      //curAngle <= desiredAngleFeedback){
+    ballHitVibration();
+    engageFeedback = false;
+    //ROS_INFO("Passed threshold!");
+    actionCounter = 0;
+  }else if(!engageFeedback && actionCounter >=0 && actionCounter < 15){
+    actionCounter ++;
+  }else{
+    actionCounter =-1;
+    stopMotors();
+  }
+}
+
 void imuCB(const sensor_msgs::Imu::ConstPtr& msg){
   double curTime = msg->header.stamp.toSec();
 
   if(prevTime > 0){
     curAngle = prevAngle + (msg->angular_velocity.x-gyroBias)*(curTime-prevTime)*gyroScaling;
   }
+
+        /*** prediction using KF ***/
+      
+
+  t += dt;
+  y_est = kf.prediction();
+  y << curAngle;
+  kf.update(y);
+  x0 << y, kf.state()(1), kf.state()(2);
+  kf.init(t, x0);
+  if (kalmanStabilizationCycles < 400)
+    kalmanStabilizationCycles++;
   
-  if (engageFeedback && 
-      prevAngle > desiredAngleFeedback && 
-      curAngle <= desiredAngleFeedback){
+  geometry_msgs::Point punto;
+  punto.x = curAngle;
+  punto.y = (double)y_est[0];
+  motor_values_pubPred.publish(punto);
+  
+  if (engageFeedback 
+    && curAngle > desiredAngleFeedback 
+    && (double)y_est[0] <= desiredAngleFeedback 
+    && kalmanStabilizationCycles == 400){
+      //prevAngle > desiredAngleFeedback && 
+      //curAngle <= desiredAngleFeedback){
     ballHitVibration();
     engageFeedback = false;
-    ROS_INFO("Passed threshold!");
+    //ROS_INFO("Passed threshold!");
+    actionCounter = 0;
+  }else if(!engageFeedback && actionCounter >=0 && actionCounter < 15){
+    actionCounter ++;
   }else{
+    actionCounter =-1;
     stopMotors();
   }
 
@@ -110,42 +207,34 @@ void commandsCB(const std_msgs::String::ConstPtr& msg){
   }else if(command.compare("engage_feedback")==0){
     engageFeedback = true;
     ROS_INFO("Feedback engaged");
+  }else if(command.compare("reset_angle")==0){
+    prevAngle = curAngle = 0;
+    kalmanStabilizationCycles = 0;
+    ROS_INFO("Angle Reset");
   }  
 }
 
 int main( int argc, char** argv )
 {
+
   ros::init(argc, argv, "online_feedback");
   ros::NodeHandle n;
   ros::Rate r(1000);
   ros::Publisher motor_values_pub = n.advertise<haptic_base::PutterValues>("putter_motor_values", 100);
+  initializeKalmanFilter();
+  motor_values_pubPred = n.advertise<geometry_msgs::Point>("angle_prediction", 100);
   //ros::Publisher status_pub = n.advertise<std_msgs::Bool>("putter_engage", 10);
-  ros::Subscriber sub = n.subscribe("/imu",100,imuCB);
+  //ros::Subscriber sub = n.subscribe("/imu",100,imuCB);
+  ros::Subscriber sub = n.subscribe("/putt_rpy",100,rpyCB);
   ros::Subscriber sub2 = n.subscribe("/golf_fb_commands",100,commandsCB);
   stopMotors();
   //Int iterator for the vector
 
   ros::Time startTime = ros::Time::now();
+  
   while (ros::ok())
   {
-   /* double elapsed = (ros::Time::now() - startTime).toNSec();
-    while (curIndex < gyro.size() && elapsed > gyro[curIndex].first ){
-      curIndex++;
-    }
-    if (curIndex < 2000){
-      if (curIndex >= hitPeakAcc.first && curIndex < hitPeakAcc.first + 15)
-        ballHitVibration();
-      else
-        updateVibration(gyro[curIndex].second.x, minValueGyro.second, maxValueGyro.second, gyro[0].second.x);
-
-    }else{
-      startTime = ros::Time::now();
-      curIndex = 0;
-      //stopMotors();
-      
-    }*/
-      
-  
+          
     motor_values_pub.publish(val);
     ros::spinOnce();
     r.sleep();

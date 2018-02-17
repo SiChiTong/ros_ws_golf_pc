@@ -194,15 +194,14 @@ void readProcessedFile(std::string name,
   std::string value;
   //Time shifting var
   double startT = -1;
-  //Peak detection vars
-  //std::pair <int, double> minValue (-1, DBL_MAX), maxValue(-1,0), hitPeak(-1, 0);
   double previousValueAcc =0;
   double previousValuePos =0;
   int numSamples = 0;
-  bool foundPeaks = false;
-  bool startPointSet = false;
-  int signChangeCount = 0;
-
+  enum PuttPhase {IDLE, BS, DS, FT};
+  PuttPhase phase = IDLE;
+  int currentSign = 0;
+  int prevSign = 0;
+  int counterSign = 0;
 
   while ( file.good() )
   {
@@ -215,7 +214,6 @@ void readProcessedFile(std::string name,
     bool validPair = false;
     
     do{
-    
       pos = value.find(delimiter);
       if (pos != std::string::npos)
         token = value.substr(0, pos);
@@ -233,51 +231,91 @@ void readProcessedFile(std::string name,
           par.first = atof(token.c_str()) - startT; 
         break;
         case 1:
-          par.second.y = atof(token.c_str()); 
-          
-          if (numSamples > 0  && previousValuePos < 0 && par.second.y > 0)
+        {
+          par.second.y = atof(token.c_str());
+          float diff = par.second.y - previousValuePos;
+            if (diff == 0)
+              currentSign = 0;
+            else if (diff<0)
+              currentSign = -1;
+            else if (diff > 0)
+              currentSign = 1;
+
+          switch(phase)
           {
-            //std::cout << "Gyro peak"<<numSamples << " "<<par.second.y<<" "<<previousValuePos << std::endl;
-            //Impact Peak detected
-            foundPeaks = true;
-            hitPeak.first = numSamples;
-            hitPeak.second = par.second.y;
-          }
+            case IDLE:
+              if (numSamples > 0){
+                //Conditions: 1. Same sign, less than zero (decreasing)
+                //&& ( fabs((diff)*100.0/(float)previousValuePos) > 5.0)
+                if (currentSign == prevSign && currentSign < 0 )
+                {
+                  counterSign++;
+                }  
+                else{
+                  counterSign=0;
+                }
 
+                //Conditions met 20 times -> change phase
+                //numSamples-counterSign > 10 &&
+                if ( counterSign >= 40)
+                {
+                  //ROS_INFO(" %d %f",numSamples,fabs(v[numSamples-counterSign].second.y*100/par.second.y));
+                  if (fabs(v[numSamples-counterSign].second.y - par.second.y) > 4.0){
+                    startPoint.first = numSamples-counterSign;
+                    startPoint.second = v[numSamples-counterSign].second.y;
+                    phase = BS;
+                    ROS_INFO("Idle->BS at %d", numSamples-counterSign);
+                  }else{
+                    counterSign = 0;
+                  }
+                  }
+              }
+            break;
+            case BS:
+                if (currentSign != prevSign && currentSign > 0 )
+                {
+                  minValue.first = numSamples;
+                  minValue.second = par.second.y;
+                  phase = DS;
+                  ROS_INFO("BS->DS at %d", numSamples);  
+                }     
+            break;
+            case DS:
+              if (previousValuePos <0 && par.second.y > 0)
+                {
+                  hitPeak.first = numSamples;
+                  hitPeak.second = par.second.y;
+                  phase = FT;
+                  ROS_INFO("DS->FT at %d", numSamples);
+                }
+            break;
+            case FT:
+            {
+              if ((maxValue.first == -1 || maxValue.second <  par.second.y) ){
+                maxValue.first  = numSamples;
+                maxValue.second = par.second.y;
+              }
+            }
 
-          if (startPointSet == false  && numSamples > 0 && ( fabs((par.second.y-previousValuePos)*100/previousValuePos) > 50)){
-              startPoint.first = numSamples;
-              startPoint.second = par.second.y;
-              //ROS_INFO("Found start at %d", numSamples);
-              startPointSet = true;
-          }
-
+          } 
+                    
+         
           previousValuePos = par.second.y;
-    
-          if ((minValue.first == -1 || minValue.second > par.second.y) ){
-            minValue.first  = numSamples;
-            minValue.second = par.second.y;
-          }
-          if ((maxValue.first == -1 || maxValue.second <  par.second.y) ){
-            maxValue.first  = numSamples;
-            maxValue.second = par.second.y;
-          }
-
-
-        
+          prevSign = currentSign;
+        }
         break;
         case 2:
           par.second.x = atof(token.c_str());
           
-          if (numSamples > 0  && previousValueAcc > 0 && (fabs((par.second.x-previousValueAcc)*100/previousValueAcc) > 500))
+          /*if (numSamples > 0  && previousValueAcc > 0 && (fabs((par.second.x-previousValueAcc)*100/previousValueAcc) > 500))
           {
             //std::cout << "Acc "<< numSamples << " "<<par.second.x<<" "<<previousValueAcc << std::endl;
-            /*foundPeaks = true;
-            hitPeak.first = numSamples;
-            hitPeak.second = par.second.x;*/
+            //foundPeaks = true;
+            //hitPeak.first = numSamples;
+            //hitPeak.second = par.second.x;
           }
           previousValueAcc = par.second.x;
-
+          */
           validPair = true; 
         break;
 

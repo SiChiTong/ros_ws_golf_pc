@@ -4,6 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/raven/ros_ws/src/lra_test_accel/src/kalman.cpp" "/home/raven/ros_ws/build/lra_test_accel/CMakeFiles/online_feedback.dir/src/kalman.cpp.o"
   "/home/raven/ros_ws/src/lra_test_accel/src/online_feedback.cpp" "/home/raven/ros_ws/build/lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
@@ -22,6 +23,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/home/raven/ros_ws/src/haptic_base/include"
   "/opt/ros/kinetic/include"
   "/opt/ros/kinetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp"
+  "/usr/include/eigen3"
   )
 
 # Targets to which this target links.

@@ -195,6 +195,33 @@ online_feedback/fast:
 	cd /home/raven/ros_ws/build && $(MAKE) -f lra_test_accel/CMakeFiles/online_feedback.dir/build.make lra_test_accel/CMakeFiles/online_feedback.dir/build
 .PHONY : online_feedback/fast
 
+src/kalman.o: src/kalman.cpp.o
+
+.PHONY : src/kalman.o
+
+# target to build an object file
+src/kalman.cpp.o:
+	cd /home/raven/ros_ws/build && $(MAKE) -f lra_test_accel/CMakeFiles/online_feedback.dir/build.make lra_test_accel/CMakeFiles/online_feedback.dir/src/kalman.cpp.o
+.PHONY : src/kalman.cpp.o
+
+src/kalman.i: src/kalman.cpp.i
+
+.PHONY : src/kalman.i
+
+# target to preprocess a source file
+src/kalman.cpp.i:
+	cd /home/raven/ros_ws/build && $(MAKE) -f lra_test_accel/CMakeFiles/online_feedback.dir/build.make lra_test_accel/CMakeFiles/online_feedback.dir/src/kalman.cpp.i
+.PHONY : src/kalman.cpp.i
+
+src/kalman.s: src/kalman.cpp.s
+
+.PHONY : src/kalman.s
+
+# target to generate assembly for a file
+src/kalman.cpp.s:
+	cd /home/raven/ros_ws/build && $(MAKE) -f lra_test_accel/CMakeFiles/online_feedback.dir/build.make lra_test_accel/CMakeFiles/online_feedback.dir/src/kalman.cpp.s
+.PHONY : src/kalman.cpp.s
+
 src/online_feedback.o: src/online_feedback.cpp.o
 
 .PHONY : src/online_feedback.o
@@ -264,6 +291,9 @@ help:
 	@echo "... install/local"
 	@echo "... online_feedback"
 	@echo "... install/strip"
+	@echo "... src/kalman.o"
+	@echo "... src/kalman.i"
+	@echo "... src/kalman.s"
 	@echo "... src/online_feedback.o"
 	@echo "... src/online_feedback.i"
 	@echo "... src/online_feedback.s"

@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(lra_test_accel_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT " " STREQUAL " ")
+if(NOT "/home/raven/ros_ws/src/lra_test_accel/include;/usr/include/eigen3 " STREQUAL " ")
   set(lra_test_accel_INCLUDE_DIRS "")
-  set(_include_dirs "")
+  set(_include_dirs "/home/raven/ros_ws/src/lra_test_accel/include;/usr/include/eigen3")
   if(NOT " " STREQUAL " ")
     set(_report "Check the issue tracker '' and consider creating a ticket if the problem has not been reported yet.")
   elseif(NOT " " STREQUAL " ")

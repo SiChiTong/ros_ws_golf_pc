@@ -118,6 +118,7 @@ int main( int argc, char** argv )
   ros::NodeHandle n;
   ros::Rate r(200);
   ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
+  ros::Publisher rpy_pub = n.advertise<geometry_msgs::Vector3>("putt_rpy", 100);
   eular_pub = n.advertise<geometry_msgs::Vector3>("eular", 10);
   //ros::Subscriber sub = n.subscribe("qt", 3, qtCallback);
   ros::Subscriber sub = n.subscribe("imu", 100, imuCallback);
@@ -126,12 +127,16 @@ int main( int argc, char** argv )
   {
     visualization_msgs::MarkerArray axis;
     
-/*    double roll, pitch, yaw;
+	double roll, pitch, yaw;
     tf::Quaternion quat;
     tf::quaternionMsgToTF(data,quat);
     tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-    ROS_INFO("%f %f %f", roll, pitch, yaw);
-*/
+    geometry_msgs::Vector3  rpy;
+    rpy.x = roll*RAD2DEG;
+    rpy.y = pitch*RAD2DEG;
+    rpy.z = yaw*RAD2DEG;
+    rpy_pub.publish(rpy);
+
 
     axis.markers.resize(3);
     for (int i=0; i<3; i++) {
