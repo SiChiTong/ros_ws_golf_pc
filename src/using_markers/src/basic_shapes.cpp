@@ -14,8 +14,8 @@
 geometry_msgs::Quaternion data;
 geometry_msgs::Vector3 eular;
 
-ros::Publisher eular_pub;
-
+//ros::Publisher eular_pub;
+ros::Publisher rpy_pub;
 void qt2eular(geometry_msgs::Quaternion qt)
 {
 	double x = qt.x;
@@ -61,7 +61,7 @@ void qt2eular(geometry_msgs::Quaternion qt)
 	eular.y *= RAD2DEG;
 	eular.z *= RAD2DEG;
 	//ROS_INFO("x=%f, y=%f, z=%f",eular.x, eular.y, eular.z);
-	eular_pub.publish(eular);
+	//eular_pub.publish(eular);
 }
 
 void qtCallback(const geometry_msgs::Quaternion::ConstPtr& qt)
@@ -80,7 +80,18 @@ void imuCallback(const sensor_msgs::Imu::ConstPtr& imu)
 	data.y = imu->orientation.y;
 	data.z = imu->orientation.z;
 	data.w = imu->orientation.w;
-	qt2eular(data);
+
+	double roll, pitch, yaw;
+    tf::Quaternion quat;
+    tf::quaternionMsgToTF(data,quat);
+    tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+    geometry_msgs::Vector3  rpy;
+    rpy.x = roll*RAD2DEG;
+    rpy.y = pitch*RAD2DEG;
+    rpy.z = yaw*RAD2DEG;
+    rpy_pub.publish(rpy);
+	
+	//qt2eular(data);
 	//ROS_INFO("aaa");
 }
 
@@ -118,8 +129,8 @@ int main( int argc, char** argv )
   ros::NodeHandle n;
   ros::Rate r(200);
   ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
-  ros::Publisher rpy_pub = n.advertise<geometry_msgs::Vector3>("putt_rpy", 100);
-  eular_pub = n.advertise<geometry_msgs::Vector3>("eular", 10);
+  rpy_pub = n.advertise<geometry_msgs::Vector3>("putt_rpy", 10);
+  //eular_pub = n.advertise<geometry_msgs::Vector3>("eular", 10);
   //ros::Subscriber sub = n.subscribe("qt", 3, qtCallback);
   ros::Subscriber sub = n.subscribe("imu", 100, imuCallback);
   uint32_t shape = visualization_msgs::Marker::ARROW;
@@ -127,16 +138,7 @@ int main( int argc, char** argv )
   {
     visualization_msgs::MarkerArray axis;
     
-	double roll, pitch, yaw;
-    tf::Quaternion quat;
-    tf::quaternionMsgToTF(data,quat);
-    tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-    geometry_msgs::Vector3  rpy;
-    rpy.x = roll*RAD2DEG;
-    rpy.y = pitch*RAD2DEG;
-    rpy.z = yaw*RAD2DEG;
-    rpy_pub.publish(rpy);
-
+	
 
     axis.markers.resize(3);
     for (int i=0; i<3; i++) {

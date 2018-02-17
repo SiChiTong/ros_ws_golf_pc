@@ -17,9 +17,7 @@ haptic_base::PutterValues val;
 
 enum State {BACKSWING, DOWNSWING};
 State curState = BACKSWING;
-double prevAngle = 0;
 double curAngle = 0;
-double prevTime = -1;
 double gyroBias = 80.878750;
 double gyroScaling = 0.0175;
 double desiredAngleFeedback = -20;
@@ -111,7 +109,7 @@ void stopMotors(){
 
 
 void rpyCB(const geometry_msgs::Vector3::ConstPtr& msg){
-  //double curTime = msg->header.stamp.toSec();
+  
   curAngle = msg->x;
         /*** prediction using KF ***/
   t += dt;
@@ -146,50 +144,6 @@ void rpyCB(const geometry_msgs::Vector3::ConstPtr& msg){
   }
 }
 
-void imuCB(const sensor_msgs::Imu::ConstPtr& msg){
-  double curTime = msg->header.stamp.toSec();
-
-  if(prevTime > 0){
-    curAngle = prevAngle + (msg->angular_velocity.x-gyroBias)*(curTime-prevTime)*gyroScaling;
-  }
-
-        /*** prediction using KF ***/
-      
-
-  t += dt;
-  y_est = kf.prediction();
-  y << curAngle;
-  kf.update(y);
-  x0 << y, kf.state()(1), kf.state()(2);
-  kf.init(t, x0);
-  if (kalmanStabilizationCycles < 400)
-    kalmanStabilizationCycles++;
-  
-  geometry_msgs::Point punto;
-  punto.x = curAngle;
-  punto.y = (double)y_est[0];
-  motor_values_pubPred.publish(punto);
-  
-  if (engageFeedback 
-    && curAngle > desiredAngleFeedback 
-    && (double)y_est[0] <= desiredAngleFeedback 
-    && kalmanStabilizationCycles == 400){
-      //prevAngle > desiredAngleFeedback && 
-      //curAngle <= desiredAngleFeedback){
-    ballHitVibration();
-    engageFeedback = false;
-    //ROS_INFO("Passed threshold!");
-    actionCounter = 0;
-  }else if(!engageFeedback && actionCounter >=0 && actionCounter < 15){
-    actionCounter ++;
-  }else{
-    actionCounter =-1;
-    stopMotors();
-  }
-
-  prevTime=curTime;
-  prevAngle = curAngle;
-}
 
 void commandsCB(const std_msgs::String::ConstPtr& msg){
     //Dont forget to receive the bias and send it from the APP when its changed please thanks
@@ -208,7 +162,7 @@ void commandsCB(const std_msgs::String::ConstPtr& msg){
     engageFeedback = true;
     ROS_INFO("Feedback engaged");
   }else if(command.compare("reset_angle")==0){
-    prevAngle = curAngle = 0;
+    //prevAngle = curAngle = 0;
     kalmanStabilizationCycles = 0;
     ROS_INFO("Angle Reset");
   }  
