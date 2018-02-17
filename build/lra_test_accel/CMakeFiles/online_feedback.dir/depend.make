@@ -201,9 +201,9 @@ lra_test_accel/CMakeFiles/online_feedback.dir/src/kalman.cpp.o: /usr/include/eig
 lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /home/raven/ros_ws/devel/include/haptic_base/PutterValues.h
 lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /home/raven/ros_ws/src/lra_test_accel/include/kalman.hpp
 lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /home/raven/ros_ws/src/lra_test_accel/src/online_feedback.cpp
-lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /opt/ros/kinetic/include/geometry_msgs/Point.h
 lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /opt/ros/kinetic/include/geometry_msgs/Quaternion.h
 lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /opt/ros/kinetic/include/geometry_msgs/Vector3.h
+lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /opt/ros/kinetic/include/geometry_msgs/Vector3Stamped.h
 lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /opt/ros/kinetic/include/ros/advertise_options.h
 lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /opt/ros/kinetic/include/ros/advertise_service_options.h
 lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o: /opt/ros/kinetic/include/ros/assert.h

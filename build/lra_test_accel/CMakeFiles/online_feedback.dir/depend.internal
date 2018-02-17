@@ -202,9 +202,9 @@ lra_test_accel/CMakeFiles/online_feedback.dir/src/online_feedback.cpp.o
  /home/raven/ros_ws/devel/include/haptic_base/PutterValues.h
  /home/raven/ros_ws/src/lra_test_accel/include/kalman.hpp
  /home/raven/ros_ws/src/lra_test_accel/src/online_feedback.cpp
- /opt/ros/kinetic/include/geometry_msgs/Point.h
  /opt/ros/kinetic/include/geometry_msgs/Quaternion.h
  /opt/ros/kinetic/include/geometry_msgs/Vector3.h
+ /opt/ros/kinetic/include/geometry_msgs/Vector3Stamped.h
  /opt/ros/kinetic/include/ros/advertise_options.h
  /opt/ros/kinetic/include/ros/advertise_service_options.h
  /opt/ros/kinetic/include/ros/assert.h

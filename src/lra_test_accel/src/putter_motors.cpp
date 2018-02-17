@@ -2,7 +2,7 @@
 #include <math.h>
 #include <haptic_base/PutterValues.h>
 #include <geometry_msgs/Point.h>
-#include <sensor_msgs/Joy.h>
+#include <std_msgs/String.h>
 #include <utility>
 #include <fstream>
 #include <limits>
@@ -10,6 +10,8 @@
 #define RAD2DEG 57.295779513 
 
 haptic_base::PutterValues val;
+
+ros::Publisher pwmValues;
 
 void readAcc(std::string name, 
   std::vector<std::pair<double, geometry_msgs::Point> > &v, 
@@ -93,7 +95,6 @@ void readAcc(std::string name,
     }
     numSamples++;
   }
-  
 }
 
 void readGyro(std::string name, 
@@ -178,8 +179,7 @@ void readGyro(std::string name,
       v.push_back(par); 
     }
     numSamples++;
-  }
-  
+  }  
 }
 
 void readProcessedFile(std::string name, 
@@ -327,10 +327,7 @@ void readProcessedFile(std::string name,
     }
     numSamples++;
   }
-  
 }
-
-
 
 int calDuty(double amplitude)
 {
@@ -351,6 +348,8 @@ void stopMotors(){
 }
 void updateVibration(double ac, double min, double max, double offset){
   double dutyCycle = 0;
+  geometry_msgs::Point punto;
+  punto.z = ac*500;
   stopMotors();
   if (ac-offset < 0){
     dutyCycle = mapValues(fabs(ac-offset), 0, fabs(min), 14.5, 0);
@@ -358,18 +357,25 @@ void updateVibration(double ac, double min, double max, double offset){
     dutyCycle = calDuty(dutyCycle);
     val.duty_values[0]=dutyCycle;
     val.interval_values[0] = interval;
+    punto.x = dutyCycle;
+    punto.y = interval*100000;
   }else if (ac-offset > 0){
     dutyCycle = mapValues(fabs(ac-offset), 0, fabs(max), 14.5, 0);
     double interval =  mapValues(abs(ac-offset), 0, fabs(max), 0.01, 0.03);
     dutyCycle = calDuty(dutyCycle);
     val.duty_values[2]=dutyCycle;
     val.interval_values[2] = interval;
+    punto.x = dutyCycle;
+    punto.y = interval*100000;
   }else{
-    val.duty_values[0]=2047;
-    //val.interval_values[0] = 0.01;
-    val.duty_values[2]=2047;
-    //val.interval_values[2] = 0.01;
+    val.duty_values[0]=calDuty(14.5);
+    val.interval_values[0] = 0.01;
+    val.duty_values[2]=calDuty(14.5);
+    val.interval_values[2] = 0.01;
+    punto.x = 2358;
+    punto.y = 0.01*100000;
   }
+  pwmValues.publish(punto);
 }
 
 void ballHitVibration(){
@@ -380,12 +386,37 @@ void ballHitVibration(){
   }
 }
 
+/*void commandsCB(const std_msgs::String::ConstPtr& msg){
+    //Dont forget to receive the bias and send it from the APP when its changed please thanks
+  std::string s = msg->data;
+  
+  std::string command = s.substr(0, s.find("#"));
+  std::string value = s.substr(s.find("#")+1);
+  
+  if(command.compare("set_bias") ==0){
+    gyroBias = atof(value.c_str());
+    ROS_INFO("Updating bias to %s",value.c_str());
+  }else if (command.compare("set_feedback_angle") ==0){
+    desiredAngleFeedback = atof(value.c_str());
+    ROS_INFO("Updating angle to %s",value.c_str());
+  }else if(command.compare("engage_feedback")==0){
+    engageFeedback = true;
+    ROS_INFO("Feedback engaged");
+  }else if(command.compare("reset_angle")==0){
+    //prevAngle = curAngle = 0;
+    kalmanStabilizationCycles = 0;
+    ROS_INFO("Angle Reset");
+  }  
+}*/
+
 int main( int argc, char** argv )
 {
   ros::init(argc, argv, "putter_motor_changer");
   ros::NodeHandle n;
   ros::Rate r(1000);
   ros::Publisher marker_pub = n.advertise<haptic_base::PutterValues>("putter_motor_values", 100);
+  pwmValues = n.advertise<geometry_msgs::Point>("pwmcalc", 100);
+
   //Accelerometer and Gyro Vectors, prerecorded
   std::vector<std::pair<double, geometry_msgs::Point> > acc, gyro, posAcc;
   //Characteristics of the curves, minumum and maximum for Yacc and Xgyro
@@ -395,7 +426,9 @@ int main( int argc, char** argv )
   //Fill the vectors with data from files
   //readAcc("/home/raven/ros_ws/src/lra_test_accel/imu_data/acc.csv", acc, minValueAcc, maxValueAcc, hitPeakAcc);
   //readGyro("/home/raven/ros_ws/src/lra_test_accel/imu_data/gyro.csv", gyro, minValueGyro, maxValueGyro, hitPeakGyro);
+  //readProcessedFile("/home/raven/ros_ws/src/lra_test_accel/imu_data/Anthonny4mTrimmed.csv", posAcc, startPoint, minValueGyro, maxValueGyro, hitPeakGyro);
   readProcessedFile("/home/raven/ros_ws/src/lra_test_accel/imu_data/Anthonny4mTrimmed.csv", posAcc, startPoint, minValueGyro, maxValueGyro, hitPeakGyro);
+
   std::cout<<"Start/Min/Hit/Max " << startPoint.first << "/" <<minValueGyro.first<< "/" << hitPeakGyro.first<< "/" << maxValueGyro.first <<std::endl;
   std::cout<<"Tempo " << (posAcc[minValueGyro.first].first - posAcc[startPoint.first].first)/1000000.0<<"/"<<(posAcc[hitPeakGyro.first].first - posAcc[minValueGyro.first].first)/1000000.0<<"="<<std::endl;
   
@@ -413,13 +446,17 @@ int main( int argc, char** argv )
       curIndex++;
     }
     if (curIndex < posAcc.size()){
-      /*if (curIndex >= hitPeakGyro.first && curIndex < hitPeakGyro.first + 15)
+      if(curIndex >= hitPeakGyro.first && curIndex < hitPeakGyro.first + 15)
         ballHitVibration();
-      else*/
-        updateVibration(posAcc[curIndex].second.y, minValueGyro.second, maxValueGyro.second, posAcc[0].second.y);
+      else
+      //posAcc[0].second.y
+        updateVibration(posAcc[curIndex].second.y, minValueGyro.second, maxValueGyro.second, 0);
 
     }else{
-      ros::Duration(1.0).sleep();
+      stopMotors();
+      marker_pub.publish(val);
+      ros::spinOnce();
+      ros::Duration(2.0).sleep();
       startTime = ros::Time::now();
       curIndex = 0;
       

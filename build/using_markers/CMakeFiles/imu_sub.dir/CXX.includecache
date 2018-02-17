@@ -15,7 +15,7 @@ visualization_msgs/MarkerArray.h
 -
 geometry_msgs/Quaternion.h
 -
-geometry_msgs/Vector3.h
+geometry_msgs/Vector3Stamped.h
 -
 angles/angles.h
 -

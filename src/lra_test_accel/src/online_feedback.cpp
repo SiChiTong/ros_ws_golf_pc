@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <math.h>
 #include <haptic_base/PutterValues.h>
-#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/String.h>
 #include <utility>
@@ -108,9 +108,9 @@ void stopMotors(){
 }
 
 
-void rpyCB(const geometry_msgs::Vector3::ConstPtr& msg){
+void rpyCB(const geometry_msgs::Vector3Stamped::ConstPtr& msg){
   
-  curAngle = msg->x;
+  curAngle = msg->vector.x;
         /*** prediction using KF ***/
   t += dt;
   y_est = kf.prediction();
@@ -121,7 +121,7 @@ void rpyCB(const geometry_msgs::Vector3::ConstPtr& msg){
   if (kalmanStabilizationCycles < 400)
     kalmanStabilizationCycles++;
   
-  geometry_msgs::Point punto;
+  geometry_msgs::Vector3 punto;
   punto.x = curAngle;
   punto.y = (double)y_est[0];
   motor_values_pubPred.publish(punto);
@@ -176,7 +176,7 @@ int main( int argc, char** argv )
   ros::Rate r(1000);
   ros::Publisher motor_values_pub = n.advertise<haptic_base::PutterValues>("putter_motor_values", 100);
   initializeKalmanFilter();
-  motor_values_pubPred = n.advertise<geometry_msgs::Point>("angle_prediction", 100);
+  motor_values_pubPred = n.advertise<geometry_msgs::Vector3>("angle_prediction", 100);
   //ros::Publisher status_pub = n.advertise<std_msgs::Bool>("putter_engage", 10);
   //ros::Subscriber sub = n.subscribe("/imu",100,imuCB);
   ros::Subscriber sub = n.subscribe("/putt_rpy",100,rpyCB);

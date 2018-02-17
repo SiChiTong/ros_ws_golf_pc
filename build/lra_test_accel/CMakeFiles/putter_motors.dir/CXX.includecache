@@ -31,7 +31,7 @@ haptic_base/PutterValues.h
 -
 geometry_msgs/Point.h
 -
-sensor_msgs/Joy.h
+std_msgs/String.h
 -
 utility
 -
@@ -702,25 +702,7 @@ ros/forwards.h
 
 /opt/ros/kinetic/include/rosconsole/macros_generated.h
 
-/opt/ros/kinetic/include/sensor_msgs/Joy.h
-string
--
-vector
--
-map
--
-ros/types.h
--
-ros/serialization.h
--
-ros/builtin_message_traits.h
--
-ros/message_operations.h
--
-std_msgs/Header.h
--
-
-/opt/ros/kinetic/include/std_msgs/Header.h
+/opt/ros/kinetic/include/std_msgs/String.h
 string
 -
 vector
