@@ -1,6 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/ros_start_generate_messages_py"
   "/home/raven/ros_ws/devel/lib/python2.7/dist-packages/ros_start/msg/_Rt2Sensor.py"
+  "/home/raven/ros_ws/devel/lib/python2.7/dist-packages/ros_start/msg/_Rt1Sensor.py"
   "/home/raven/ros_ws/devel/lib/python2.7/dist-packages/ros_start/msg/__init__.py"
 )
 

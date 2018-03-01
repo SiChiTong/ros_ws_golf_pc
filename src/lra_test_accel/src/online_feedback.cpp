@@ -18,11 +18,11 @@ haptic_base::PutterValues val;
 enum State {BACKSWING, DOWNSWING};
 State curState = BACKSWING;
 double curAngle = 0;
-double gyroBias = 80.878750;
 double gyroScaling = 0.0175;
 double desiredAngleFeedback = -20;
 bool engageFeedback = true;
 int actionCounter = -1;
+
 
 double dt = 1.0/200.; // Time step
 /*** KalmanFilter Setup ***/
@@ -38,7 +38,7 @@ Eigen::VectorXd x0(n_k);
 double t = 0;
 Eigen::VectorXd y(m_k), y_est(m_k);
 int kalmanStabilizationCycles = 0;
-ros::Publisher motor_values_pubPred;
+//ros::Publisher motor_values_pubPred;
 
 void initializeKalmanFilter(){
   // Discrete LTI projectile motion, measuring position only
@@ -121,11 +121,11 @@ void rpyCB(const geometry_msgs::Vector3Stamped::ConstPtr& msg){
   if (kalmanStabilizationCycles < 400)
     kalmanStabilizationCycles++;
   
-  geometry_msgs::Vector3 punto;
+  /*geometry_msgs::Vector3 punto;
   punto.x = curAngle;
   punto.y = (double)y_est[0];
   motor_values_pubPred.publish(punto);
-  
+  */
   if (engageFeedback 
     && curAngle > desiredAngleFeedback 
     && (double)y_est[0] <= desiredAngleFeedback 
@@ -134,9 +134,10 @@ void rpyCB(const geometry_msgs::Vector3Stamped::ConstPtr& msg){
       //curAngle <= desiredAngleFeedback){
     ballHitVibration();
     engageFeedback = false;
+
     //ROS_INFO("Passed threshold!");
     actionCounter = 0;
-  }else if(!engageFeedback && actionCounter >=0 && actionCounter < 15){
+  }else if(!engageFeedback && actionCounter >=0 && actionCounter < 10){
     actionCounter ++;
   }else{
     actionCounter =-1;
@@ -152,10 +153,7 @@ void commandsCB(const std_msgs::String::ConstPtr& msg){
   std::string command = s.substr(0, s.find("#"));
   std::string value = s.substr(s.find("#")+1);
   
-  if(command.compare("set_bias") ==0){
-    gyroBias = atof(value.c_str());
-    ROS_INFO("Updating bias to %s",value.c_str());
-  }else if (command.compare("set_feedback_angle") ==0){
+  if (command.compare("set_feedback_angle") ==0){
     desiredAngleFeedback = atof(value.c_str());
     ROS_INFO("Updating angle to %s",value.c_str());
   }else if(command.compare("engage_feedback")==0){
@@ -165,7 +163,11 @@ void commandsCB(const std_msgs::String::ConstPtr& msg){
     //prevAngle = curAngle = 0;
     kalmanStabilizationCycles = 0;
     ROS_INFO("Angle Reset");
-  }  
+  }else if(command.compare("produce_tempo") ==0){
+    //Listening to this topic to switch between two modalities
+    engageFeedback = true;
+    ROS_INFO("Engaged Feedback");
+  } 
 }
 
 int main( int argc, char** argv )
@@ -176,7 +178,7 @@ int main( int argc, char** argv )
   ros::Rate r(1000);
   ros::Publisher motor_values_pub = n.advertise<haptic_base::PutterValues>("putter_motor_values", 100);
   initializeKalmanFilter();
-  motor_values_pubPred = n.advertise<geometry_msgs::Vector3>("angle_prediction", 100);
+  //motor_values_pubPred = n.advertise<geometry_msgs::Vector3>("angle_prediction", 100);
   //ros::Publisher status_pub = n.advertise<std_msgs::Bool>("putter_engage", 10);
   //ros::Subscriber sub = n.subscribe("/imu",100,imuCB);
   ros::Subscriber sub = n.subscribe("/putt_rpy",100,rpyCB);
@@ -188,8 +190,9 @@ int main( int argc, char** argv )
   
   while (ros::ok())
   {
-          
+    
     motor_values_pub.publish(val);
+    
     ros::spinOnce();
     r.sleep();
 

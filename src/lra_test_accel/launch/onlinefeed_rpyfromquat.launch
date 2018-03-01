@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="using_markers" type="basic_shapes" name="basic_shapes" output="screen"/>
+	<node pkg="lra_test_accel" type="online_feedback" name="online_feedback" output="screen"/>
+	
+</launch>

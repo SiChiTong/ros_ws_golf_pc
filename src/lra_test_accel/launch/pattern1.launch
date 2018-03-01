@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="using_markers" type="basic_shapes" name="basic_shapes" output="screen"/>
+	<node pkg="lra_test_accel" type="putter_motors" name="putter_motors" output="screen">
+		<param type="int" name="pattern_number" value="1"/>
+	</node>
+</launch>

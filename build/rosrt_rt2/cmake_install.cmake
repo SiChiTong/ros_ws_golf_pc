@@ -33,7 +33,10 @@ if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/ros_start/msg" TYPE FILE FILES "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/ros_start/msg" TYPE FILE FILES
+    "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg"
+    "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg"
+    )
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")

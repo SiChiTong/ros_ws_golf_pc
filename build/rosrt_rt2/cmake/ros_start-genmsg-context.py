@@ -1,6 +1,6 @@
 # generated from genmsg/cmake/pkg-genmsg.context.in
 
-messages_str = "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg"
+messages_str = "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg;/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg"
 services_str = ""
 pkg_name = "ros_start"
 dependencies_str = "std_msgs;geometry_msgs"

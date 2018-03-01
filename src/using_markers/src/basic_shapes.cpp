@@ -69,15 +69,13 @@ int main( int argc, char** argv )
   ros::init(argc, argv, "basic_shapes");
   ros::NodeHandle n;
   ros::Rate r(200);
-  ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
+  //ros::Publisher marker_pub = n.advertise<visualization_msgs::MarkerArray>("visualization_marker", 10);
   rpy_pub = n.advertise<geometry_msgs::Vector3Stamped>("putt_rpy", 10);
-  //eular_pub = n.advertise<geometry_msgs::Vector3>("eular", 10);
-  //ros::Subscriber sub = n.subscribe("qt", 3, qtCallback);
   ros::Subscriber sub = n.subscribe("imu", 100, imuCallback);
-  uint32_t shape = visualization_msgs::Marker::ARROW;
+//  uint32_t shape = visualization_msgs::Marker::ARROW;
   while (ros::ok())
   {
-    visualization_msgs::MarkerArray axis;
+    /*visualization_msgs::MarkerArray axis;
     
 	
 
@@ -122,7 +120,7 @@ int main( int argc, char** argv )
     	axis.markers[i].lifetime = ros::Duration();
     }
     marker_pub.publish(axis);
-    
+    */
     ros::spinOnce();
     r.sleep();
   }

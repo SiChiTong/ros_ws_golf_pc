@@ -1,6 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/ros_start_generate_messages_cpp"
   "/home/raven/ros_ws/devel/include/ros_start/Rt2Sensor.h"
+  "/home/raven/ros_ws/devel/include/ros_start/Rt1Sensor.h"
 )
 
 # Per-language clean rules from dependency scanning.

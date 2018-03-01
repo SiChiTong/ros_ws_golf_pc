@@ -1,6 +1,6 @@
 # generated from genmsg/cmake/pkg-genmsg.cmake.em
 
-message(STATUS "ros_start: 1 messages, 0 services")
+message(STATUS "ros_start: 2 messages, 0 services")
 
 set(MSG_I_FLAGS "-Iros_start:/home/raven/ros_ws/src/rosrt_rt2/msg;-Istd_msgs:/opt/ros/kinetic/share/std_msgs/cmake/../msg;-Igeometry_msgs:/opt/ros/kinetic/share/geometry_msgs/cmake/../msg")
 
@@ -22,6 +22,11 @@ add_custom_target(_ros_start_generate_messages_check_deps_${_filename}
   COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "ros_start" "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg" "geometry_msgs/Accel:geometry_msgs/Twist:geometry_msgs/Vector3"
 )
 
+get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg" NAME_WE)
+add_custom_target(_ros_start_generate_messages_check_deps_${_filename}
+  COMMAND ${CATKIN_ENV} ${PYTHON_EXECUTABLE} ${GENMSG_CHECK_DEPS_SCRIPT} "ros_start" "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg" "geometry_msgs/Accel:geometry_msgs/Twist:geometry_msgs/Vector3:geometry_msgs/Wrench"
+)
+
 #
 #  langs = gencpp;geneus;genlisp;gennodejs;genpy
 #
@@ -32,6 +37,12 @@ _generate_msg_cpp(ros_start
   "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg"
   "${MSG_I_FLAGS}"
   "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  ${CATKIN_DEVEL_PREFIX}/${gencpp_INSTALL_DIR}/ros_start
+)
+_generate_msg_cpp(ros_start
+  "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg"
+  "${MSG_I_FLAGS}"
+  "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Wrench.msg"
   ${CATKIN_DEVEL_PREFIX}/${gencpp_INSTALL_DIR}/ros_start
 )
 
@@ -51,6 +62,8 @@ add_dependencies(ros_start_generate_messages ros_start_generate_messages_cpp)
 # add dependencies to all check dependencies targets
 get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg" NAME_WE)
 add_dependencies(ros_start_generate_messages_cpp _ros_start_generate_messages_check_deps_${_filename})
+get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg" NAME_WE)
+add_dependencies(ros_start_generate_messages_cpp _ros_start_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility
 add_custom_target(ros_start_gencpp)
@@ -65,6 +78,12 @@ _generate_msg_eus(ros_start
   "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg"
   "${MSG_I_FLAGS}"
   "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  ${CATKIN_DEVEL_PREFIX}/${geneus_INSTALL_DIR}/ros_start
+)
+_generate_msg_eus(ros_start
+  "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg"
+  "${MSG_I_FLAGS}"
+  "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Wrench.msg"
   ${CATKIN_DEVEL_PREFIX}/${geneus_INSTALL_DIR}/ros_start
 )
 
@@ -84,6 +103,8 @@ add_dependencies(ros_start_generate_messages ros_start_generate_messages_eus)
 # add dependencies to all check dependencies targets
 get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg" NAME_WE)
 add_dependencies(ros_start_generate_messages_eus _ros_start_generate_messages_check_deps_${_filename})
+get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg" NAME_WE)
+add_dependencies(ros_start_generate_messages_eus _ros_start_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility
 add_custom_target(ros_start_geneus)
@@ -98,6 +119,12 @@ _generate_msg_lisp(ros_start
   "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg"
   "${MSG_I_FLAGS}"
   "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  ${CATKIN_DEVEL_PREFIX}/${genlisp_INSTALL_DIR}/ros_start
+)
+_generate_msg_lisp(ros_start
+  "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg"
+  "${MSG_I_FLAGS}"
+  "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Wrench.msg"
   ${CATKIN_DEVEL_PREFIX}/${genlisp_INSTALL_DIR}/ros_start
 )
 
@@ -117,6 +144,8 @@ add_dependencies(ros_start_generate_messages ros_start_generate_messages_lisp)
 # add dependencies to all check dependencies targets
 get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg" NAME_WE)
 add_dependencies(ros_start_generate_messages_lisp _ros_start_generate_messages_check_deps_${_filename})
+get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg" NAME_WE)
+add_dependencies(ros_start_generate_messages_lisp _ros_start_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility
 add_custom_target(ros_start_genlisp)
@@ -131,6 +160,12 @@ _generate_msg_nodejs(ros_start
   "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg"
   "${MSG_I_FLAGS}"
   "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  ${CATKIN_DEVEL_PREFIX}/${gennodejs_INSTALL_DIR}/ros_start
+)
+_generate_msg_nodejs(ros_start
+  "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg"
+  "${MSG_I_FLAGS}"
+  "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Wrench.msg"
   ${CATKIN_DEVEL_PREFIX}/${gennodejs_INSTALL_DIR}/ros_start
 )
 
@@ -150,6 +185,8 @@ add_dependencies(ros_start_generate_messages ros_start_generate_messages_nodejs)
 # add dependencies to all check dependencies targets
 get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg" NAME_WE)
 add_dependencies(ros_start_generate_messages_nodejs _ros_start_generate_messages_check_deps_${_filename})
+get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg" NAME_WE)
+add_dependencies(ros_start_generate_messages_nodejs _ros_start_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility
 add_custom_target(ros_start_gennodejs)
@@ -164,6 +201,12 @@ _generate_msg_py(ros_start
   "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg"
   "${MSG_I_FLAGS}"
   "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg"
+  ${CATKIN_DEVEL_PREFIX}/${genpy_INSTALL_DIR}/ros_start
+)
+_generate_msg_py(ros_start
+  "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg"
+  "${MSG_I_FLAGS}"
+  "/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Accel.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Twist.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Vector3.msg;/opt/ros/kinetic/share/geometry_msgs/cmake/../msg/Wrench.msg"
   ${CATKIN_DEVEL_PREFIX}/${genpy_INSTALL_DIR}/ros_start
 )
 
@@ -182,6 +225,8 @@ add_dependencies(ros_start_generate_messages ros_start_generate_messages_py)
 
 # add dependencies to all check dependencies targets
 get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt2Sensor.msg" NAME_WE)
+add_dependencies(ros_start_generate_messages_py _ros_start_generate_messages_check_deps_${_filename})
+get_filename_component(_filename "/home/raven/ros_ws/src/rosrt_rt2/msg/Rt1Sensor.msg" NAME_WE)
 add_dependencies(ros_start_generate_messages_py _ros_start_generate_messages_check_deps_${_filename})
 
 # target for backward compatibility

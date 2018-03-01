@@ -1,0 +1,84 @@
+if (timeOffset < 0)
+								timeOffset = p.time;
+							curTime = (p.time-timeOffset)/1000000000;
+							rawData.write(curTime+","+p.angleShaft+","+p.angleFace+"\n");
+							if (prevTime >0)
+								curDiffVel = (p.angleShaft - prevAngleShaft)/(curTime - prevTime);
+							
+
+							switch(phase){
+							case IDLE:
+								if (numSamples > 0){
+									if (Math.signum(curDiffVel) == Math.signum(prevDiffVel) 
+											&& Math.signum(curDiffVel) ==-1.0)
+									{
+										counterSign++;
+										
+
+										if ( counterSign >=countThreshold && 
+												Math.abs(curDiffVel) > 10.0 &&
+												Math.abs(prevDiffVel) > 10.0 &&
+												p.angleShaft <-2.0){
+											points.start.index = numSamples-counterSign;
+											points.start.value = v.get(numSamples-counterSign).angleShaft;
+											phase = PuttPhase.BS;
+											//System.out.println("ID->BS at "+ numSamples);
+										}
+
+									}else{
+										counterSign=0;
+									}
+								}
+								break;
+							case BS:
+								if (Math.signum(curDiffVel) != Math.signum(prevDiffVel) && curDiffVel >= 0  )
+								{
+									/*points.min.index = numSamples;
+				                        points.min.value = p.angleShaft;*/
+									points.min.index = numSamples-1;
+									points.min.value = prevAngleShaft;
+									phase = PuttPhase.DS;
+									//System.out.println("BS->DS at "+ numSamples);
+								}
+								break;
+							case DS:
+								if (prevAngleShaft <0 && p.angleShaft > 0)
+								{
+									points.hit.index = numSamples;
+									points.hit.value = p.angleShaft;
+									phase = PuttPhase.FT;
+									//ROS_INFO("DS->FT at %d", numSamples);
+									//System.out.println("DS->FT at "+ numSamples);
+								}
+								break;
+							case FT:
+							{
+								if ((points.max.index == -1 || points.max.value <  p.angleShaft) ){
+									points.max.index = numSamples;
+									points.max.value = p.angleShaft;
+								}
+								//
+								if(Math.abs(p.angleShaft) < 3.0 && Math.abs(p.angleShaft-prevAngleShaft) <0.1){
+									idleCounter ++;
+								}
+
+
+								if (idleCounter >60 || numSamples == v.size()-1){
+									
+									phase = PuttPhase.IDLE;
+									idleCounter=0;
+									if(points.max.value - points.min.value > 10)
+										vecPointsForOneFile.add(points);
+									points = new PuttPhasePoints();
+									//ROS_INFO("DS->FT at %d", numSamples);
+									//System.out.println("FT->ID at "+ numSamples);
+
+								}
+
+								break;
+							}
+							}
+							prevAngleShaft = p.angleShaft;
+							prevDiffVel = curDiffVel;
+							prevTime = curTime;
+							numSamples++;
